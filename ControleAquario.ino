@@ -54,7 +54,7 @@ uint8_t wheaterSensor[8] = { 0x28, 0x2D, 0xEF, 0xE7, 0x26, 0x20, 0x01, 0x42 };
 
 // Monving Average Params
 //---------------------------------------------------------------
-#define movingAveragePoints 25
+#define movingAveragePoints 60
 
 // Objects
 //---------------------------------------------------------------
