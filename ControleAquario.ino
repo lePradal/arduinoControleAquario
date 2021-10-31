@@ -72,13 +72,16 @@ float weatherTemperature;
 float lastTemperature;
 float humidity;
 bool stateChanged;
-int delayMS;
+int delayMS = 1000;
+int delayHttp = 5000;
 float margin = 0.2;
 bool isActive;
 float setPoint;
 long lastGetParams;
 long lastLoopCicle;
-const uint8_t fingerprint[20] = {0x94, 0xFC, 0xF6, 0x23, 0x6C, 0x37, 0xD5, 0xE7, 0x92, 0x78, 0x3C, 0x0B, 0x5F, 0xAD, 0x0C, 0xE4, 0x9E, 0xFD, 0x9E, 0xA8};
+//const uint8_t fingerprint[20] = {0x94, 0xFC, 0xF6, 0x23, 0x6C, 0x37, 0xD5, 0xE7, 0x92, 0x78, 0x3C, 0x0B, 0x5F, 0xAD, 0x0C, 0xE4, 0x9E, 0xFD, 0x9E, 0xA8};
+const uint8_t fingerprint[20] = {0x94, 0x44, 0x36, 0x9B, 0xEF, 0x9C, 0x85, 0x7C, 0x75, 0xA8, 0xAE, 0x52, 0x1F, 0x53, 0x63, 0x09, 0xD5, 0xC6, 0x0D, 0x69};
+
 float waterTempHist[movingAveragePoints];
 float weatherTempHist[movingAveragePoints];
 
@@ -114,7 +117,6 @@ void setup() {
   }
 
   //delayMS = samplingRate * 1000;
-  delayMS = 1000;
 
   lastLoopCicle = millis();
   lastGetParams = millis();
@@ -145,7 +147,7 @@ void loop() {
     EEPROM.write(LAST_WEATHER_TEMP, weatherTemperature);
     EEPROM.commit();
   
-    if (millis() - lastGetParams >= 60000) {
+    if (millis() - lastGetParams >= delayHttp) {
   
       aquarium = getAquarium();
   
@@ -176,11 +178,15 @@ void loop() {
       
       //bool peltierSt = peltier.control(temperature, setPoint);
       //bool heaterSt = heater.control(temperature, margin, setPoint);
+    } else {
+      digitalWrite(peltierPin, 1);
+      digitalWrite(heaterPin, 1);
     }
 
     lastLoopCicle = millis();
 
   }
+  delay(50);
 };
 
 // Methods
@@ -189,7 +195,8 @@ void loop() {
 String getToken() {
   if ((WiFiMulti.run() == WL_CONNECTED)) {
     std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-    client->setFingerprint(fingerprint);
+    //client->setFingerprint(fingerprint);
+    client->setInsecure();
     HTTPClient https;
     Serial.print("[HTTPS] Auth - POST... begin authentication\n");
     if (https.begin(*client, "https://" APP_HOST "/auth")) {
@@ -224,7 +231,8 @@ Aquarium getAquarium() {
   
   if ((WiFiMulti.run() == WL_CONNECTED)) {
     std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-    client->setFingerprint(fingerprint);
+    //client->setFingerprint(fingerprint);
+    client->setInsecure();
     HTTPClient https;
     Serial.print("[HTTPS] Aquarium - GET... getting aquarium\n");
     if (https.begin(*client, "https://" APP_HOST "/aquariums/" AQUARIUM_ID)) {
@@ -263,7 +271,8 @@ bool updateAquarium() {
   
   if ((WiFiMulti.run() == WL_CONNECTED)) {
     std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-    client->setFingerprint(fingerprint);
+    //client->setFingerprint(fingerprint);
+    client->setInsecure();
     HTTPClient https;
     Serial.println("[HTTPS] Aquarium - PUT... updating aquarium");
     if (https.begin(*client, "https://" APP_HOST "/aquariums/" AQUARIUM_ID)) {
@@ -302,7 +311,8 @@ bool registerResult() {
   
   if ((WiFiMulti.run() == WL_CONNECTED)) {
     std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-    client->setFingerprint(fingerprint);
+    //client->setFingerprint(fingerprint);
+    client->setInsecure();
     HTTPClient https;
     Serial.println("[HTTPS] Aquarium - POST... registering result");
     if (https.begin(*client, "https://" APP_HOST "/results")) {
